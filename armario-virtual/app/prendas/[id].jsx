@@ -1,16 +1,19 @@
 // app/prendas/[id].jsx
-// Pantalla 3: Detalle de una prenda. Lee el id de la ruta y lo busca en el mock.
-// Maneja cargando, "no encontrada" (vacío) y datos.
+// Pantalla 3: Detalle de una prenda (Soft/Glow UI).
+// Lee el id de la ruta, busca en el mock y normaliza la fuente de imagen.
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { obtenerPrendaPorId } from '../../src/mocks/mockPrendas';
+import { normalizarFuente } from '../../src/features/prendas/components/PrendaCard';
 import Cargando from '../../src/components/Cargando';
-// import EstadoVacio from '../../src/components/EstadoVacio';
-import { colores, espaciado, radios, tipografia } from '../../src/theme/tema';
+import EstadoVacio from '../../src/components/EstadoVacio';
+import { colores, espaciado, radios, tipografia, crearGlow } from '../../src/theme/tema';
 
 export default function DetallePrenda() {
-  const { id } = useLocalSearchParams(); // id dinámico de la ruta 
+  const { id } = useLocalSearchParams();
   const router = useRouter();
   const [prenda, setPrenda] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -29,14 +32,11 @@ export default function DetallePrenda() {
       }
     };
     cargar();
-    return () => {
-      activo = false;
-    };
+    return () => { activo = false; };
   }, [id]);
 
   if (cargando) return <Cargando mensaje="Cargando prenda..." />;
 
-  // Estado "vacío" específico: la prenda no existe.
   if (!prenda) {
     return (
       <EstadoVacio
@@ -48,9 +48,21 @@ export default function DetallePrenda() {
     );
   }
 
+  const fuente = normalizarFuente(prenda.imagen);
+
   return (
     <ScrollView style={styles.contenedor} contentContainerStyle={styles.contenido}>
-      <Image source={{ uri: prenda.imagen }} style={styles.imagen} />
+      <Animated.View entering={FadeInDown.duration(400)}>
+        {fuente ? (
+          <Image source={fuente} style={styles.imagen} />
+        ) : (
+          // Placeholder "Sin foto" a lo grande para el detalle.
+          <View style={[styles.imagen, styles.sinFoto]}>
+            <Ionicons name="image-outline" size={56} color={colores.rosaFuerte} />
+            <Text style={styles.sinFotoTexto}>Sin foto</Text>
+          </View>
+        )}
+      </Animated.View>
 
       <Text style={styles.nombre}>{prenda.nombre}</Text>
 
@@ -63,34 +75,39 @@ export default function DetallePrenda() {
         <Text style={styles.valor}>{prenda.temporada}</Text>
       </View>
 
-      {/* Lleva al formulario en modo edición, pasando el id. */}
-      <TouchableOpacity
+      <Pressable
         style={styles.botonEditar}
         onPress={() =>
           router.push({ pathname: '/prendas/formulario', params: { id: prenda.id } })
         }
-        activeOpacity={0.85}
       >
+        <Ionicons name="create-outline" size={20} color={colores.blancoPuro} />
         <Text style={styles.textoBotonEditar}>Editar prenda</Text>
-      </TouchableOpacity>
+      </Pressable>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    backgroundColor: colores.fondo,
-  },
-  contenido: {
-    padding: espaciado.lg,
-  },
+  contenedor: { flex: 1, backgroundColor: colores.base },
+  contenido: { padding: espaciado.lg },
   imagen: {
     width: '100%',
-    height: 320,
-    borderRadius: radios.lg,
+    height: 340,
+    borderRadius: radios.xl,
     backgroundColor: colores.borde,
     marginBottom: espaciado.lg,
+  },
+  sinFoto: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colores.rosaPastel,
+  },
+  sinFotoTexto: {
+    marginTop: espaciado.sm,
+    color: colores.rosaFuerte,
+    fontSize: tipografia.cuerpo.tamano,
+    fontWeight: '600',
   },
   nombre: {
     fontSize: tipografia.titulo.tamano,
@@ -105,24 +122,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colores.borde,
   },
-  etiqueta: {
-    fontSize: tipografia.cuerpo.tamano,
-    color: colores.textoSuave,
-  },
-  valor: {
-    fontSize: tipografia.cuerpo.tamano,
-    color: colores.texto,
-    fontWeight: '600',
-  },
+  etiqueta: { fontSize: tipografia.cuerpo.tamano, color: colores.textoSuave },
+  valor: { fontSize: tipografia.cuerpo.tamano, color: colores.texto, fontWeight: '600' },
   botonEditar: {
-    backgroundColor: colores.primario,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: espaciado.sm,
+    backgroundColor: colores.rosaFuerte,
     paddingVertical: espaciado.md,
-    borderRadius: radios.md,
+    borderRadius: radios.lg,
     alignItems: 'center',
     marginTop: espaciado.xl,
+    ...crearGlow(colores.rosaFuerte),
   },
   textoBotonEditar: {
-    color: colores.superficie,
+    color: colores.blancoPuro,
     fontSize: tipografia.subtitulo.tamano,
     fontWeight: '600',
   },

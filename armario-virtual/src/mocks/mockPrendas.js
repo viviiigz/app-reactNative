@@ -1,85 +1,47 @@
 // src/mocks/mockPrendas.js
 // -----------------------------------------------------------------------------
-// Mock de datos de prendas + funciones asíncronas simuladas.
-// Simula un "backend" en memoria: cada operación devuelve una Promesa que
-// resuelve tras 1.5s (setTimeout) para imitar la latencia de red y poder
-// probar los estados de carga y vacío en la UI.
+// Mock de datos de prendas + funciones asíncronas simuladas (1.5s de latencia).
+// Simula un "backend" en memoria. Las 5 prendas base usan imágenes LOCALES
+// vía require() (no URLs de internet). Categorías del set estricto:
+// Superior / Inferior / Calzado / Accesorio.
 // -----------------------------------------------------------------------------
 
-// Retardo (en ms) que simula la latencia de red.
 const LATENCIA_MS = 1500;
 
-// Helper: envuelve un valor en una Promesa que resuelve tras LATENCIA_MS.
 const simularLatencia = (dato) =>
   new Promise((resolver) => {
     setTimeout(() => resolver(dato), LATENCIA_MS);
   });
 
-// "Base de datos" en memoria. Se muta con las operaciones de escritura.
+// "Base de datos" en memoria. Las imágenes base son assets locales (require).
 let prendas = [
-  {
-    id: '1',
-    nombre: 'Campera de jean',
-    categoria: 'Abrigo',
-    temporada: 'Otoño',
-    imagen: 'https://picsum.photos/seed/campera/400/500',
-  },
-  {
-    id: '2',
-    nombre: 'Remera blanca básica',
-    categoria: 'Superior',
-    temporada: 'Verano',
-    imagen: 'https://picsum.photos/seed/remera/400/500',
-  },
-  {
-    id: '3',
-    nombre: 'Jean negro slim',
-    categoria: 'Inferior',
-    temporada: 'Todo el año',
-    imagen: 'https://picsum.photos/seed/jean/400/500',
-  },
-  {
-    id: '4',
-    nombre: 'Zapatillas urbanas',
-    categoria: 'Calzado',
-    temporada: 'Todo el año',
-    imagen: 'https://picsum.photos/seed/zapatillas/400/500',
-  },
-  {
-    id: '5',
-    nombre: 'Buzo con capucha',
-    categoria: 'Abrigo',
-    temporada: 'Invierno',
-    imagen: 'https://picsum.photos/seed/buzo/400/500',
-  },
+  { id: '1', nombre: 'Campera de jean',      categoria: 'Superior',  temporada: 'Otoño / Invierno',   imagen: require('../../assets/images/prendas/campera.jpg') },
+  { id: '2', nombre: 'Remera blanca básica', categoria: 'Superior',  temporada: 'Primavera / Verano', imagen: require('../../assets/images/prendas/remera.jpg') },
+  { id: '3', nombre: 'Jean negro slim',      categoria: 'Inferior',  temporada: 'Todo el año',        imagen: require('../../assets/images/prendas/pantalon.jpg') },
+  { id: '4', nombre: 'Zapatillas urbanas',   categoria: 'Calzado',   temporada: 'Todo el año',        imagen: require('../../assets/images/prendas/zapatillass.jpg') },
+  { id: '5', nombre: 'Cinturón de cuero',    categoria: 'Accesorio', temporada: 'Todo el año',        imagen: require('../../assets/images/prendas/cinturon.jpg') },
 ];
 
-// Genera un id único simple (suficiente para el prototipo sin backend).
 const generarId = () => Date.now().toString();
 
-// --- LECTURA -----------------------------------------------------------------
-
-// Devuelve todas las prendas.
+// --- LECTURA ---
 export const obtenerPrendas = () => {
   return simularLatencia(prendas.map((prenda) => ({ ...prenda })));
 };
 
-// Devuelve una prenda por su id, o null si no existe.
 export const obtenerPrendaPorId = (id) => {
   const encontrada = prendas.find((prenda) => prenda.id === id);
   return simularLatencia(encontrada ? { ...encontrada } : null);
 };
 
-// --- ESCRITURA ---------------------------------------------------------------
-
-// Agrega una prenda nueva. Recibe los datos (sin id) y devuelve la creada.
+// --- ESCRITURA ---
 export const agregarPrenda = (datos) => {
-  const nuevaPrenda = { id: generarId(), ...datos };
+  // Las prendas nuevas que cargue la usuaria traen su imagen como uri (o null).
+  const nuevaPrenda = { id: generarId(), imagen: null, ...datos };
   prendas = [...prendas, nuevaPrenda];
   return simularLatencia({ ...nuevaPrenda });
 };
 
-// Actualiz 
 export const actualizarPrenda = (id, datos) => {
   let actualizada = null;
   prendas = prendas.map((prenda) => {
@@ -92,7 +54,6 @@ export const actualizarPrenda = (id, datos) => {
   return simularLatencia(actualizada ? { ...actualizada } : null);
 };
 
-// Elimina una prenda por id. Devuelve true si se eliminó, false si no existía.
 export const eliminarPrenda = (id) => {
   const cantidadInicial = prendas.length;
   prendas = prendas.filter((prenda) => prenda.id !== id);

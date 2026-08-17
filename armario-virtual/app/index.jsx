@@ -1,138 +1,161 @@
 // app/index.jsx
-// Pantalla 1: Inicio / Resumen del armario.
-// Muestra cuántas prendas hay (consultando el mock) y da acceso al listado y al alta.
-import React, { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { obtenerPrendas } from '../src/mocks/mockPrendas';
-import Cargando from '../src/components/Cargando';
-import { colores, espaciado, radios, tipografia } from '../src/theme/tema';
+// TAREA 4 — Home Interactivo del Armario Virtual (versión responsive por CAPAS).
+// Técnica de layering: en vez de <ImageBackground> (que aplasta/recorta la
+// figura), armamos un "sándwich":
+//   1) La base: un <View> con el color de fondo real.
+//   2) La imagen: un PNG transparente en position 'absolute' que flota encima.
+//   3) La interfaz: botones anclados abajo, superpuestos sobre la figura.
+// Así el fondo nunca deja franjas feas y la figura se ve entera en cualquier pantalla.
+import React from 'react';
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+} from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { colores as PALETA } from '../src/theme/tema';
+
+
+// Botón "Soft/Glow": borde ultra redondeado, sombra coloreada (glow) y
+// respuesta táctil elástica al presionar (withSpring). Reutilizable.
+function BotonSoft({ etiqueta, icono, colorFondo, colorTexto, colorGlow, delay, onPress }) {
+  const escala = useSharedValue(1);
+
+  const estiloAnimado = useAnimatedStyle(() => ({
+    transform: [{ scale: escala.value }],
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(delay).duration(600).springify().damping(14)}
+      style={[styles.sombraGlow, { shadowColor: colorGlow }]}
+    >
+      <Animated.View style={estiloAnimado}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={() => (escala.value = withSpring(0.96))}
+          onPressOut={() => (escala.value = withSpring(1))}
+          style={[styles.boton, { backgroundColor: colorFondo }]}
+        >
+          <Ionicons name={icono} size={22} color={colorTexto} />
+          <Text style={[styles.botonTexto, { color: colorTexto }]}>{etiqueta}</Text>
+        </Pressable>
+      </Animated.View>
+    </Animated.View>
+  );
+}
 
 export default function Inicio() {
   const router = useRouter();
-  const [cargando, setCargando] = useState(true);
-  const [totalPrendas, setTotalPrendas] = useState(0);
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
-  // Recargamos el resumen cada vez que la pantalla toma foco.
-  useFocusEffect(
-    useCallback(() => {
-      let activo = true;
-      const cargarResumen = async () => {
-        try {
-          setCargando(true);
-          const prendas = await obtenerPrendas();
-          if (activo) setTotalPrendas(prendas.length);
-        } catch (error) {
-          console.error('Error al cargar el resumen:', error);
-        } finally {
-          if (activo) setCargando(false);
-        }
-      };
-      cargarResumen();
-      return () => {
-        activo = false;
-      };
-    }, [])
-  );
-
-  if (cargando) return <Cargando mensaje="Preparando tu armario..." />;
+  // Responsivo: acotamos el ancho de la botonera en pantallas grandes (tablet/web).
+  const anchoBotonera = Math.min(width - 48, 480);
 
   return (
-    <ImageBackground source={require('../assets/images/descarga.jpg')} style={styles.contenedor}>
-      {/* <Text style={styles.titulo}>Mi Closet</Text> */}
-    <View style={{ flex: 9, justifyContent: 'space-between', alignItems: 'center' }}>
-      <MaterialCommunityIcons name="hanger" size={70} color="pink"/>
-       </View>
-      {/* <View style={styles.tarjetaResumen}>
-        <Text style={styles.numero}>{totalPrendas}</Text>
-        <Text style={styles.etiqueta}>
-          {totalPrendas === 1 ? 'prenda guardada' : 'prendas guardadas'}
-        </Text>
-      </View> */}
-    <TouchableOpacity
-        style={styles.botonPrimario}
-        onPress={() => router.push('/prendas')}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.textoBotonPrimario}>Ver mis Outfits</Text>
-      </TouchableOpacity>
+    // CAPA 1 — La base: el color de fondo lo define este View, no la imagen.
+    <View style={styles.contenedor}>
+      {/* Oculta el header nativo SOLO en esta pantalla (Home inmersivo). */}
+      <Stack.Screen options={{ headerShown: false }} />
 
-
-      <TouchableOpacity
-        style={styles.botonPrimario}
-        onPress={() => router.push('/prendas')}
-        activeOpacity={0.85}
+      {/* CAPA 2 — La imagen flotante (PNG transparente).
+          - position 'absolute' + absoluteFill: ocupa toda la pantalla.
+          - resizeMode 'contain': la figura se ve ENTERA y a escala en cualquier
+            tamaño, sin recortes ni deformación (responsive de verdad).
+          - pointerEvents 'none': la imagen no intercepta toques, así los botones
+            que quedan encima siguen siendo tocables. */}
+  <Image
+  source={require('../assets/images/fondito.png')}
+  resizeMode="contain"
+  pointerEvents="none"
+  style={styles.imagenFlotante}
+/>
+      {/* CAPA 3 — La interfaz: botonera anclada abajo, superpuesta a la figura. */}
+      <View
+        style={[
+          styles.overlay,
+          { width: anchoBotonera, paddingBottom: insets.bottom + 60 },
+        ]}
       >
-        <Text style={styles.textoBotonPrimario}>Ver mis Prendas</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.botonSecundario}
-        onPress={() => router.push('/prendas/formulario')}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.textoBotonSecundario}>+ Agregar prenda</Text>
-      </TouchableOpacity>
-    </ImageBackground>
+        <BotonSoft
+          etiqueta="Ver mis Outfits"
+          icono="albums-outline"
+          colorFondo={PALETA.rosaPastel}
+          colorTexto={PALETA.texto}
+          colorGlow={PALETA.rosaFuerte}
+          delay={150}
+          onPress={() => router.push('/outfits')} // pendiente Tarea 5 (ver nota)
+        />
+        <BotonSoft
+          etiqueta="Ver mis Prendas"
+          icono="shirt-outline"
+          colorFondo={PALETA.rosaPastel}
+          colorTexto={PALETA.texto}
+          colorGlow={PALETA.rosaFuerte}
+          delay={300}
+          onPress={() => router.push('/prendas')}
+        />
+        <BotonSoft
+          etiqueta="Agregar Prenda"
+          icono="add-circle-outline"
+          colorFondo={PALETA.rosaFuerte}
+          colorTexto={PALETA.blancoPuro}
+          colorGlow={PALETA.rosaFuerte}
+          delay={450}
+          onPress={() => router.push('/prendas/formulario')}
+        />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   contenedor: {
-    flex: 4,
-    backgroundColor: colores.fondo,
-    padding: espaciado.lg,
-    justifyContent: 'flex-start',
+    flex: 1,
+    backgroundColor: PALETA.base, // el fondo real de la pantalla
   },
-  titulo: {
-    fontSize: tipografia.titulo.tamano, 
-    fontWeight: tipografia.titulo.grosor,
-    color: colores.texto,
-    marginBottom: espaciado.xl,
-    textAlign: 'center',
+imagenFlotante: {
+    ...StyleSheet.absoluteFillObject, // llena TODA la pantalla
+    width: '100%',
+    height: '83%',
+
   },
-  tarjetaResumen: {
-    backgroundColor: colores.superficie,
-    borderRadius: radios.lg,
-    paddingVertical: espaciado.xl,
+  overlay: {
+    flex: 1,
+    alignSelf: 'center', // centra la botonera horizontalmente
+    justifyContent: 'flex-end', // empuja los botones hacia abajo
+    gap: 18,
+  },
+  sombraGlow: {
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 10,
+    borderRadius: 28,
+  },
+  boton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: espaciado.xl,
-    borderWidth: 1,
-    borderColor: colores.borde,
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 28,
   },
-  numero: {
-    fontSize: 48,
+  botonTexto: {
+    fontSize: 18,
     fontWeight: '700',
-    color: colores.primario,
-  },
-  etiqueta: {
-    fontSize: tipografia.cuerpo.tamano,
-    color: colores.textoSuave,
-    marginTop: espaciado.xs,
-  },
-  botonPrimario: {
-    backgroundColor: colores.primario,
-    paddingVertical: espaciado.md,
-    borderRadius: radios.md,
-    alignItems: 'center',
-    marginBottom: espaciado.md,
-  },
-  textoBotonPrimario: {
-    color: colores.superficie,
-    fontSize: tipografia.subtitulo.tamano,
-    fontWeight: '600',
-  },
-  botonSecundario: {
-    paddingVertical: espaciado.md,
-    borderRadius: radios.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colores.primario,
-  },
-  textoBotonSecundario: {
-    color: colores.primario,
-    fontSize: tipografia.subtitulo.tamano,
-    fontWeight: '600',
   },
 });

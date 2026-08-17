@@ -12,11 +12,17 @@ export const colores = {
   primario: '#f692ba', // color de marca (verde salvia) para botones/acentos
   primarioOscuro: '#be557f', // estados presionados / títulos fuertes
   secundario: '#f5cde5', // acento dorado para detalles y badges
-  texto: '#1F2421', // texto principal
-  textoSuave: '#6B7280', // texto secundario / descripciones
   borde: '#E4E0D8', // bordes de inputs y separadores
   error: '#C0392B', // mensajes de validación
   exito: '#2E7D32', // confirmaciones (ej: "prenda guardada")
+  blancoPuro: '#FFFFFF',
+  rosaPastel: '#FBDCE5',
+  rosaFuerte: '#F48FB1',
+  lavanda: '#E7E0FA',
+  lavandaFuerte: '#B39DDB',
+  texto: '#4A4458',
+  textoSuave: '#9A94A8',
+  rojoSuave: '#ed7171', // fondo pastel del botón "Eliminar"
 };
 
 // Escala de espaciados (en px). Usar SIEMPRE estos valores para márgenes y
@@ -44,9 +50,18 @@ export const tipografia = {
   cuerpo: { tamano: 15, grosor: '400' },
   etiqueta: { tamano: 13, grosor: '500' },
 };
+// Helper para generar una sombra "glow" coloreada a partir de un color.
+export const crearGlow = (color) => ({
+  shadowColor: color,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.35,
+  shadowRadius: 16,
+  elevation: 8,
+});
+
 
 // Export agrupado por comodidad: permite `import { tema } from '...'`
 // y usar tema.colores.primario, tema.espaciado.md, etc.
-export const tema = { colores, espaciado, radios, tipografia };
+export const tema = { colores, espaciado, radios, tipografia, crearGlow };
 
 export default tema;

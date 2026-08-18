@@ -15,14 +15,17 @@ armario-virtual/
 ├── app/ 
 │   ├── _layout.jsx 
 │   ├── index.jsx 
+        outfits/
+        ├── index.jsx              ← álbumes (con portada)
+        ├── crear.jsx              ← crear look
+        ├── album/
+        │   └── [albumId].jsx      ← looks del álbum (SIN portada)
+        └── look/
+        └── [lookId].jsx       ← detalle del look (SIN portada)
 │   ├── prendas/
 │   │   ├── index.jsx 
 │   │   ├── [id].jsx 
 │   │   └── formulario.jsx 
-│   └── outfits/
-│       ├── index.jsx         # Listado de carpetas de outfits
-│       ├── crear.jsx         # Pantalla interactiva para armar el outfit
-│       └── [id].jsx          # Detalle del outfit armado
 └── src/ 
     ├── components/Cargando, EstadoVacio
     ├── features/prendas

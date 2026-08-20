@@ -9,7 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useOutfits } from '../../src/features/outfits/hooks/useOutfits';
 import { useTheme } from '../../src/hooks/useTheme';
 import { validarLook, MINIMO_PRENDAS_LOOK } from '../../src/utils/validaciones';
-import { normalizarFuente } from '../../src/features/prendas/components/PrendaCard';
+import { normalizarFuente } from '../../src/utils/imagenes';
 import Cargando from '../../src/components/Cargando';
 import { crearEstilos } from './crear.styles';
 

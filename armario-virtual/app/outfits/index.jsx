@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useOutfits } from '../../src/features/outfits/hooks/useOutfits';
 import { useTheme } from '../../src/hooks/useTheme';
-import { normalizarFuente } from '../../src/features/prendas/components/PrendaCard';
+import { normalizarFuente } from '../../src/utils/imagenes';
 import Cargando from '../../src/components/Cargando';
 import EstadoVacio from '../../src/components/EstadoVacio';
 import { crearEstilos } from './index.styles';

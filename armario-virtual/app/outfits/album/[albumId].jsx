@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useOutfits } from '../../../src/features/outfits/hooks/useOutfits';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { normalizarFuente } from '../../../src/features/prendas/components/PrendaCard';
+import { normalizarFuente } from '../../../src/utils/imagenes';
 import Cargando from '../../../src/components/Cargando';
 import EstadoVacio from '../../../src/components/EstadoVacio';
 import { crearEstilos } from './[albumId].styles';

@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { obtenerPrendas } from '../../src/mocks/mockPrendas';
-import { normalizarFuente } from '../../src/features/prendas/components/PrendaCard';
+import { normalizarFuente } from '../../src/utils/imagenes';
 import Cargando from '../../src/components/Cargando';
 import { colores, espaciado, radios, tipografia, crearGlow } from '../../src/theme/tema';
 

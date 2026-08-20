@@ -1,27 +1,32 @@
 // app/prendas/index.jsx
-// TAREA 5 — Catálogo de Prendas.
-// Pestañas estrictas: Todos / Superior / Inferior / Calzado / Accesorio.
-// "Todos" viene seleccionado por defecto y muestra el catálogo completo.
+// Catálogo de Prendas con tema dinámico. Pestañas: Todos / Superior / Inferior
+// / Calzado / Accesorio. "Todos" por defecto. Buscador en tiempo real.
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, FlatList, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { obtenerPrendas } from '../../src/mocks/mockPrendas';
 import PrendaCard from '../../src/features/prendas/components/PrendaCard';
+import { useTheme } from '../../src/hooks/useTheme';
 import Cargando from '../../src/components/Cargando';
 import EstadoVacio from '../../src/components/EstadoVacio';
-import { colores, espaciado, radios, tipografia, crearGlow } from '../../src/theme/tema';
+import { crearEstilos } from './index.styles';
 
-// Pestañas de filtrado. "Todos" es un caso especial (no filtra por categoría).
 const PESTANAS = ['Todos', 'Superior', 'Inferior', 'Calzado', 'Accesorio'];
 
 export default function Catalogo() {
   const router = useRouter();
+
+  // --- Tema dinámico ---
+  const tema = useTheme();
+  const { colores } = tema;
+  const styles = useMemo(() => crearEstilos(tema), [tema]);
+
   const [prendas, setPrendas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
-  const [pestana, setPestana] = useState('Todos'); // seleccionada por defecto
+  const [pestana, setPestana] = useState('Todos');
 
   useFocusEffect(
     useCallback(() => {
@@ -42,8 +47,7 @@ export default function Catalogo() {
     }, [])
   );
 
-  // Filtro blindado: "Todos" no filtra por categoría; el resto compara directo.
-  // El uso de p?.categoria y (p?.nombre ?? '') evita crashes si falta un campo.
+  // Filtro por pestaña + búsqueda (blindado ante campos faltantes).
   const prendasFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
     return prendas.filter((p) => {
@@ -72,24 +76,14 @@ export default function Catalogo() {
         )}
       </Animated.View>
 
-      {/* Pestañas: en scroll horizontal para que las 5 entren cómodas. */}
+      {/* Pestañas en scroll horizontal */}
       <Animated.View entering={FadeInDown.delay(80).duration(400)}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.pestanas}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pestanas}>
           {PESTANAS.map((item) => {
             const activa = item === pestana;
             return (
-              <Pressable
-                key={item}
-                onPress={() => setPestana(item)}
-                style={[styles.pestana, activa && styles.pestanaActiva]}
-              >
-                <Text style={[styles.pestanaTexto, activa && styles.pestanaTextoActivo]}>
-                  {item}
-                </Text>
+              <Pressable key={item} onPress={() => setPestana(item)} style={[styles.pestana, activa && styles.pestanaActiva]}>
+                <Text style={[styles.pestanaTexto, activa && styles.pestanaTextoActivo]}>{item}</Text>
               </Pressable>
             );
           })}
@@ -132,35 +126,3 @@ export default function Catalogo() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  contenedor: { flex: 1, backgroundColor: colores.base },
-  buscador: {
-    flexDirection: 'row', alignItems: 'center', gap: espaciado.sm,
-    backgroundColor: colores.superficie, marginHorizontal: espaciado.md,
-    marginTop: espaciado.md, paddingHorizontal: espaciado.md,
-    paddingVertical: espaciado.sm, borderRadius: radios.lg,
-    ...crearGlow(colores.rosaFuerte),
-  },
-  buscadorInput: { flex: 1, fontSize: tipografia.cuerpo.tamano, color: colores.texto },
-  // paddingHorizontal en el content para que la primera/última píldora respiren.
-  pestanas: {
-    flexDirection: 'row', gap: espaciado.sm,
-    paddingHorizontal: espaciado.md, paddingVertical: espaciado.md,
-  },
-  pestana: {
-    paddingVertical: espaciado.sm, paddingHorizontal: espaciado.lg,
-    borderRadius: radios.circular, backgroundColor: colores.superficie,
-    alignItems: 'center', borderWidth: 1, borderColor: colores.borde,
-  },
-  pestanaActiva: { backgroundColor: colores.rosaFuerte, borderColor: colores.rosaFuerte },
-  pestanaTexto: { fontSize: tipografia.etiqueta.tamano, fontWeight: '600', color: colores.texto },
-  pestanaTextoActivo: { color: colores.blancoPuro },
-  lista: { padding: espaciado.md, paddingBottom: 96 },
-  fab: {
-    position: 'absolute', right: espaciado.lg, bottom: espaciado.lg,
-    width: 58, height: 58, borderRadius: radios.circular,
-    backgroundColor: colores.rosaFuerte, justifyContent: 'center',
-    alignItems: 'center', ...crearGlow(colores.rosaFuerte),
-  },
-});

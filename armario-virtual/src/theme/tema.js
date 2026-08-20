@@ -1,67 +1,48 @@
 // src/theme/tema.js
-// -----------------------------------------------------------------------------
-// Tokens de diseño de la app (fuente única de verdad para el estilo).
-// Toda pantalla/componente importa de acá; NO se hardcodean colores ni
-// espaciados sueltos. Si mañana cambia la identidad visual, se toca solo esto.
-// -----------------------------------------------------------------------------
+// Define los TOKENS de diseño. Los colores vienen en dos paletas (claro/oscuro);
+// espaciado, radios y tipografía no dependen del modo. El Provider elige cuál
+// paleta está activa. Se mantiene `colores` (claro) exportado para retrocompat
+// con los archivos que todavía no migraron a useTheme.
 
-// Paleta de colores. Tonos cálidos y sobrios, pensados para una app de armario.
-export const colores = {
-  fondo: '#F5F3EF', // fondo general de las pantallas (crema suave)
-  superficie: '#FFFFFF', // tarjetas, inputs, contenedores elevados
-  primario: '#f692ba', // color de marca (verde salvia) para botones/acentos
-  primarioOscuro: '#be557f', // estados presionados / títulos fuertes
-  secundario: '#f5cde5', // acento dorado para detalles y badges
-  borde: '#E4E0D8', // bordes de inputs y separadores
-  error: '#C0392B', // mensajes de validación
-  exito: '#2E7D32', // confirmaciones (ej: "prenda guardada")
-  blancoPuro: '#FFFFFF',
-  rosaPastel: '#FBDCE5',
-  rosaFuerte: '#F48FB1',
-  lavanda: '#E7E0FA',
-  lavandaFuerte: '#B39DDB',
-  texto: '#4A4458',
-  textoSuave: '#9A94A8',
-  rojoSuave: '#ed7171', // fondo pastel del botón "Eliminar"
-};
-
-// Escala de espaciados (en px). Usar SIEMPRE estos valores para márgenes y
-// paddings, así el ritmo visual queda consistente en toda la app.
-export const espaciado = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-};
-
-// Radios de borde para tarjetas, botones e inputs.
-export const radios = {
-  sm: 6,
-  md: 12,
-  lg: 20,
-  circular: 999, // para avatares o botones redondos
-};
-
-// Tokens de tipografía (tamaños y grosores).
+// --- Tokens agnósticos al modo ---
+export const espaciado = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+export const radios = { sm: 10, md: 18, lg: 28, xl: 36, circular: 999 };
 export const tipografia = {
-  titulo: { tamano: 24, grosor: '700' },
+  titulo: { tamano: 26, grosor: '700' },
   subtitulo: { tamano: 18, grosor: '600' },
   cuerpo: { tamano: 15, grosor: '400' },
   etiqueta: { tamano: 13, grosor: '500' },
 };
-// Helper para generar una sombra "glow" coloreada a partir de un color.
 export const crearGlow = (color) => ({
-  shadowColor: color,
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.35,
-  shadowRadius: 16,
-  elevation: 8,
+  shadowColor: color, shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
 });
 
+// --- Paleta MODO CLARO ---
+export const coloresClaro = {
+  base: '#FFF5F8', superficie: '#FFFFFF', blancoPuro: '#FFFFFF',
+  rosaPastel: '#FBDCE5', rosaFuerte: '#F48FB1',
+  lavanda: '#E7E0FA', lavandaFuerte: '#B39DDB',
+  texto: '#4A4458', textoSuave: '#9A94A8',
+  borde: '#F0E6EC', error: '#E57373', rojoSuave: '#FDECEC',
+};
 
-// Export agrupado por comodidad: permite `import { tema } from '...'`
-// y usar tema.colores.primario, tema.espaciado.md, etc.
-export const tema = { colores, espaciado, radios, tipografia, crearGlow };
+// --- Paleta MODO OSCURO ---
+// Los acentos (rosaFuerte, lavandaFuerte, error) se mantienen para que el glow
+// siga leyéndose; cambian fondos y textos.
+export const coloresOscuro = {
+  base: '#1C1922', superficie: '#272231', blancoPuro: '#FFFFFF',
+  rosaPastel: '#3A2A33', rosaFuerte: '#F48FB1',
+  lavanda: '#332C46', lavandaFuerte: '#B39DDB',
+  texto: '#EDE9F2', textoSuave: '#9A94A8',
+  borde: '#3A3446', error: '#E57373', rojoSuave: '#3A2626',
+};
 
+// --- Temas completos (lo que consume el Provider) ---
+export const temaClaro = { modo: 'claro', colores: coloresClaro, espaciado, radios, tipografia, crearGlow };
+export const temaOscuro = { modo: 'oscuro', colores: coloresOscuro, espaciado, radios, tipografia, crearGlow };
+
+// --- Retrocompat: archivos aún no migrados siguen importando { colores } ---
+export const colores = coloresClaro;
+export const tema = temaClaro;
 export default tema;

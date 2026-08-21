@@ -1,8 +1,6 @@
 // app/outfits/album/[albumId].jsx
-// Vista presentacional de la carpeta: consume useOutfits (cargar + eliminar)
-// y useTheme (estilos dinámicos). Usa <Cargando /> y <EstadoVacio />.
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, Image, Pressable, FlatList, Alert } from 'react-native';
+import { View, Text, Image, Pressable, FlatList, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -13,38 +11,42 @@ import Cargando from '../../../src/components/Cargando';
 import EstadoVacio from '../../../src/components/EstadoVacio';
 import { crearEstilos } from './[albumId].styles';
 
+// Helper: confirmación que funciona en web (window.confirm) y en celular (Alert).
+const confirmar = (titulo, mensaje, onSi) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm(`${titulo}\n\n${mensaje}`)) onSi();
+    return;
+  }
+  Alert.alert(titulo, mensaje, [
+    { text: 'Cancelar', style: 'cancel' },
+    { text: 'Eliminar', style: 'destructive', onPress: onSi },
+  ]);
+};
+
 export default function DentroDeLaSeccion() {
   const { albumId } = useLocalSearchParams();
   const router = useRouter();
 
-  // --- Tema dinámico ---
   const tema = useTheme();
   const { colores } = tema;
   const styles = useMemo(() => crearEstilos(tema), [tema]);
 
-  // --- Datos ---
   const { album, looks, mapaPrendas, cargando, error, cargarAlbum, borrarAlbum, borrarLook } = useOutfits();
   useFocusEffect(useCallback(() => { cargarAlbum(albumId); }, [cargarAlbum, albumId]));
 
   const confirmarEliminarAlbum = () => {
-    Alert.alert('Eliminar sección', '¿Seguro? Se borrará la sección y todos sus looks.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => { await borrarAlbum(albumId); router.back(); } },
-    ]);
+    confirmar('Eliminar sección', 'Se borrará la sección y todos sus looks.', async () => {
+      await borrarAlbum(albumId);
+      router.back();
+    });
   };
 
   const confirmarEliminarLook = (lookId) => {
-    Alert.alert('Eliminar look', '¿Querés eliminar este look?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => borrarLook(lookId) },
-    ]);
+    confirmar('Eliminar look', '¿Querés eliminar este look?', () => borrarLook(lookId));
   };
 
   if (cargando) return <Cargando mensaje="Cargando sección..." />;
-
-  if (error) {
-    return <EstadoVacio titulo="Ups" icono="alert-circle-outline" mensaje={error} />;
-  }
+  if (error) return <EstadoVacio titulo="Ups" icono="alert-circle-outline" mensaje={error} />;
 
   return (
     <View style={styles.contenedor}>
@@ -77,7 +79,11 @@ export default function DentroDeLaSeccion() {
               <Pressable style={styles.tarjeta} onPress={() => router.push(`/outfits/look/${item.id}`)}>
                 <View style={styles.tarjetaHeader}>
                   <Text style={styles.tarjetaTitulo} numberOfLines={1}>{item.nombre}</Text>
-                  <Pressable onPress={() => confirmarEliminarLook(item.id)} hitSlop={8}>
+                  <Pressable
+                    hitSlop={8}
+                    // Evita que el toque de la papelera abra el detalle (burbujeo).
+                    onPress={(e) => { e.stopPropagation(); confirmarEliminarLook(item.id); }}
+                  >
                     <Ionicons name="trash-outline" size={20} color={colores.error} />
                   </Pressable>
                 </View>

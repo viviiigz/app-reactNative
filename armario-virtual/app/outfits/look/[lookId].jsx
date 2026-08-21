@@ -60,13 +60,6 @@ export default function DetalleLook() {
       <Stack.Screen options={{ title: look.nombre ?? 'Look' }} />
       <ScrollView contentContainerStyle={styles.contenido}>
         {/* Hero de texto (sin portada) */}
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.hero}>
-          <View style={styles.heroIcono}>
-            <Ionicons name="albums-outline" size={30} color={colores.rosaFuerte} />
-          </View>
-          <Text style={styles.heroTitulo}>{look.nombre}</Text>
-          <Text style={styles.heroMeta}>{prendas.length} prendas en este look</Text>
-        </Animated.View>
 
         {/* Lista vertical de prendas */}
         <Text style={styles.seccion}>Prendas</Text>

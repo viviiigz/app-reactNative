@@ -1,62 +1,51 @@
 // src/mocks/mockPrendas.js
-// -----------------------------------------------------------------------------
-// Mock de datos de prendas + funciones asíncronas simuladas (1.5s de latencia).
-// Simula un "backend" en memoria. Las 5 prendas base usan imágenes LOCALES
-// vía require() (no URLs de internet). Categorías del set estricto:
-// Superior / Inferior / Calzado / Accesorio.
-// -----------------------------------------------------------------------------
+// Persistencia REAL con AsyncStorage. Misma interfaz de siempre. Arranca VACÍO:
+// la usuaria carga sus prendas (con uri de cámara/galería, que sí se guarda).
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LATENCIA_MS = 1500;
+const CLAVE_PRENDAS = 'armario:prendas';
 
-const simularLatencia = (dato) =>
-  new Promise((resolver) => {
-    setTimeout(() => resolver(dato), LATENCIA_MS);
-  });
-
-// "Base de datos" en memoria. Las imágenes base son assets locales (require).
-let prendas = [
-  { id: '1', nombre: 'Campera de jean',      categoria: 'Superior',  temporada: 'Otoño / Invierno',   imagen: require('../../assets/images/prendas/campera.jpg') },
-  { id: '2', nombre: 'Remera blanca básica', categoria: 'Superior',  temporada: 'Primavera / Verano', imagen: require('../../assets/images/prendas/remera.jpg') },
-  { id: '3', nombre: 'Jean negro slim',      categoria: 'Inferior',  temporada: 'Todo el año',        imagen: require('../../assets/images/prendas/pantalon.jpg') },
-  { id: '4', nombre: 'Zapatillas urbanas',   categoria: 'Calzado',   temporada: 'Todo el año',        imagen: require('../../assets/images/prendas/zapatillass.jpg') },
-  { id: '5', nombre: 'Cinturón de cuero',    categoria: 'Accesorio', temporada: 'Todo el año',        imagen: require('../../assets/images/prendas/cinturon.jpg') },
-];
+const leerLista = async (clave) => {
+  const crudo = await AsyncStorage.getItem(clave);
+  return crudo ? JSON.parse(crudo) : [];
+};
+const guardarLista = (clave, lista) => AsyncStorage.setItem(clave, JSON.stringify(lista));
 
 const generarId = () => Date.now().toString();
 
 // --- LECTURA ---
-export const obtenerPrendas = () => {
-  return simularLatencia(prendas.map((prenda) => ({ ...prenda })));
-};
+export const obtenerPrendas = () => leerLista(CLAVE_PRENDAS);
 
-export const obtenerPrendaPorId = (id) => {
-  const encontrada = prendas.find((prenda) => prenda.id === id);
-  return simularLatencia(encontrada ? { ...encontrada } : null);
+export const obtenerPrendaPorId = async (id) => {
+  const prendas = await leerLista(CLAVE_PRENDAS);
+  return prendas.find((p) => p.id === id) ?? null;
 };
 
 // --- ESCRITURA ---
-export const agregarPrenda = (datos) => {
-  // Las prendas nuevas que cargue la usuaria traen su imagen como uri (o null).
-  const nuevaPrenda = { id: generarId(), imagen: null, ...datos };
-  prendas = [...prendas, nuevaPrenda];
-  return simularLatencia({ ...nuevaPrenda });
+export const agregarPrenda = async (datos) => {
+  const prendas = await leerLista(CLAVE_PRENDAS);
+  const nueva = { id: generarId(), imagen: null, ...datos }; // imagen null si no vino
+  await guardarLista(CLAVE_PRENDAS, [...prendas, nueva]);
+  return nueva;
 };
 
-export const actualizarPrenda = (id, datos) => {
+export const actualizarPrenda = async (id, datos) => {
+  const prendas = await leerLista(CLAVE_PRENDAS);
   let actualizada = null;
-  prendas = prendas.map((prenda) => {
-    if (prenda.id === id) {
-      actualizada = { ...prenda, ...datos, id };
-      return actualizada;
-    }
-    return prenda;
+  const nuevas = prendas.map((p) => {
+    if (p.id === id) { actualizada = { ...p, ...datos, id }; return actualizada; }
+    return p;
   });
-  return simularLatencia(actualizada ? { ...actualizada } : null);
+  await guardarLista(CLAVE_PRENDAS, nuevas);
+  return actualizada;
 };
 
-export const eliminarPrenda = (id) => {
-  const cantidadInicial = prendas.length;
-  prendas = prendas.filter((prenda) => prenda.id !== id);
-  const seElimino = prendas.length < cantidadInicial;
-  return simularLatencia(seElimino);
+export const eliminarPrenda = async (id) => {
+  const prendas = await leerLista(CLAVE_PRENDAS);
+  const nuevas = prendas.filter((p) => p.id !== id);
+  await guardarLista(CLAVE_PRENDAS, nuevas);
+  return nuevas.length < prendas.length;
 };
+
+// --- HERRAMIENTA DE DESARROLLO ---
+export const resetearPrendasDev = () => AsyncStorage.removeItem(CLAVE_PRENDAS);
